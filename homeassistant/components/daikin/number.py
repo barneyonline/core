@@ -77,7 +77,8 @@ class DaikinZoneTemperature(DaikinEntity, NumberEntity):
             _LOGGER.error("Failed to retrieve zone temperature, using default value.")
             self._current_value = self._target_temperature
 
-        # Example: allow up to 2°C above the device's "target_temperature"
+        # Allow 2°C below target up to 2°C above target
+        self._attr_native_min_value = self._target_temperature - 2
         self._attr_native_max_value = self._target_temperature + 2
 
     @property
