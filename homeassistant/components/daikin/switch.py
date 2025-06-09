@@ -28,7 +28,7 @@ async def async_setup_entry(
         switches.extend(
             DaikinZoneSwitch(daikin_api, zone_id)
             for zone_id, zone in enumerate(zones)
-            if zone[0] != "-"
+            if len(zone) >= 1 and zone[0] != "-"
         )
     if daikin_api.device.support_advanced_modes:
         # It isn't possible to find out from the API responses if a specific
