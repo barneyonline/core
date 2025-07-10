@@ -47,24 +47,43 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianDeviceState]):
         )
 
         self.controller = controller
-        self.yid = entry.data["yid"]
+        self._yid = entry.data["yid"]
         self._name = entry.title
         self._model = entry.data["model"]
+        self._serial_number = entry.data.get("serialNumber")
+        self.oper_info: OperationInfo | None = None
+
+    @property
+    def yid(self) -> str:
+        """Return the controller unique id."""
+        return self._yid
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return information about the device."""
-        return DeviceInfo(
+        info = DeviceInfo(
             name=self._name,
-            identifiers={(DOMAIN, self.yid)},
+            identifiers={(DOMAIN, self._yid)},
             manufacturer=MANUFACTURER,
             model=self._model,
         )
+        if self._serial_number:
+            info["serial_number"] = self._serial_number
+        return info
+
+    @property
+    def serial_number(self) -> str | None:
+        """Return the controller serial number."""
+        return self._serial_number
 
     async def _async_update_data(self) -> YardianDeviceState:
         """Fetch data from Yardian device."""
         try:
             async with asyncio.timeout(10):
+                self.oper_info = await self.controller.fetch_oper_info()
+                if not self._serial_number:
+                    device_info = await self.controller.fetch_device_info()
+                    self._serial_number = device_info.get("serialNumber")
                 return await self.controller.fetch_device_state()
 
         except TimeoutError as e:
