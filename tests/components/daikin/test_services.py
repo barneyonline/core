@@ -243,7 +243,7 @@ async def test_service_multiple_calls(setup_integration) -> None:
     """Test multiple service calls in quick succession."""
     hass, coordinator = setup_integration
     await services.async_setup_services(hass)
-    for temp in [22, 23, 21]:
+    for temp in (22, 23, 21):
         service_data = {"zone_id": 0, "temperature": temp}
         await hass.services.async_call(
             "daikin", services.SERVICE_SET_ZONE_TEMPERATURE, service_data, blocking=True

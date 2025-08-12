@@ -289,7 +289,7 @@ class DaikinClimate(DaikinEntity, ClimateEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra state attributes, mapping zone IDs to set temperatures for ON zones only, for the current mode."""
-        attrs = super().extra_state_attributes or {}
+        attrs = dict(super().extra_state_attributes or {})
         lztemp_h = self.device.values.get("lztemp_h")
         lztemp_c = self.device.values.get("lztemp_c")
         zones = getattr(self.device, "zones", None)
@@ -313,12 +313,13 @@ class DaikinClimate(DaikinEntity, ClimateEntity):
         # Only include zones that are ON (switch enabled)
         zone_temps = {}
         if zones:
-            for i, zone in enumerate(zones):
-                if zone[1] != "1":
+            for idx, zone in enumerate(zones):
+                zone_enabled = zone[1] == "1"
+                if not zone_enabled:
                     continue
-                if use_heating and i < len(heating_temps):
-                    zone_temps[i] = heating_temps[i]
-                elif use_cooling and i < len(cooling_temps):
-                    zone_temps[i] = cooling_temps[i]
+                if use_heating and idx < len(heating_temps):
+                    zone_temps[idx] = heating_temps[idx]
+                elif use_cooling and idx < len(cooling_temps):
+                    zone_temps[idx] = cooling_temps[idx]
         attrs["zone_temps"] = zone_temps
         return attrs
