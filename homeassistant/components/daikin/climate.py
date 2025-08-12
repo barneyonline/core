@@ -308,14 +308,15 @@ class DaikinClimate(DaikinEntity, ClimateEntity):
         cooling_temps = parse_zone_temps(lztemp_c)
         # Determine current mode
         mode = self.hvac_mode
-        use_heating = mode == HVACMode.HEAT
-        use_cooling = mode == HVACMode.COOL
+        # fmt: off
+        use_heating = (mode == HVACMode.HEAT)
+        use_cooling = (mode == HVACMode.COOL)
+        # fmt: on
         # Only include zones that are ON (switch enabled)
         zone_temps = {}
         if zones:
-            for idx, zone in enumerate(zones):
-                zone_enabled = zone[1] == "1"
-                if not zone_enabled:
+            for idx, (_, enabled) in enumerate(zones):
+                if enabled != "1":
                     continue
                 if use_heating and idx < len(heating_temps):
                     zone_temps[idx] = heating_temps[idx]
