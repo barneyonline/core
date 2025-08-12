@@ -300,20 +300,22 @@ class DaikinClimate(DaikinEntity, ClimateEntity):
             try:
                 decoded = unquote(val)
                 return [float(x) for x in decoded.split(";")]
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as err:
+                _LOGGER.debug("Invalid zone temperature data '%s': %s", val, err)
                 return []
 
         heating_temps = parse_zone_temps(lztemp_h)
         cooling_temps = parse_zone_temps(lztemp_c)
         # Determine current mode
         mode = self.hvac_mode
-        use_heating = mode == "heat"
-        use_cooling = mode == "cool"
+        use_heating = mode == HVACMode.HEAT
+        use_cooling = mode == HVACMode.COOL
         # Only include zones that are ON (switch enabled)
         zone_temps = {}
         if zones:
-            on_indices = [i for i, z in enumerate(zones) if z[1] == "1"]
-            for i in on_indices:
+            for i, zone in enumerate(zones):
+                if zone[1] != "1":
+                    continue
                 if use_heating and i < len(heating_temps):
                     zone_temps[i] = heating_temps[i]
                 elif use_cooling and i < len(cooling_temps):
