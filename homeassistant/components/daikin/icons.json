@@ -23,9 +23,9 @@
       }
     }
   },
-  "service": {
+  "services": {
     "set_zone_temperature": {
-      "default": "mdi:thermometer"
+      "service": "mdi:thermometer"
     }
   }
 }
