@@ -5,13 +5,13 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from pyyardian.async_client import YardianDeviceState
 
 from homeassistant.components.button import DOMAIN as BUTTON_DOMAIN
 from homeassistant.components.yardian.const import DOMAIN
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.const import EntityCategory
-from pyyardian.async_client import YardianDeviceState
 
 from tests.common import MockConfigEntry
 

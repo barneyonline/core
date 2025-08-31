@@ -5,8 +5,8 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-from syrupy.assertion import SnapshotAssertion
 from pyyardian.async_client import YardianDeviceState
+from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.components.yardian.const import DOMAIN
 from homeassistant.components.yardian.diagnostics import (
