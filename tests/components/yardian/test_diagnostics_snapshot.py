@@ -65,6 +65,9 @@ async def test_diagnostics_snapshot(
     with patch(
         "homeassistant.components.yardian.__init__.AsyncYardianClient",
         return_value=FakeYardianClient(),
+    ), patch(
+        "homeassistant.requirements.RequirementsManager.async_process_requirements",
+        return_value=None,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()

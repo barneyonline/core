@@ -63,6 +63,9 @@ async def test_entities_and_button_press(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.components.yardian.__init__.AsyncYardianClient",
         return_value=FakeYardianClient(),
+    ), patch(
+        "homeassistant.requirements.RequirementsManager.async_process_requirements",
+        return_value=None,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -139,6 +142,9 @@ async def test_binary_sensors_state(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.components.yardian.__init__.AsyncYardianClient",
         return_value=FakeYardianClient(),
+    ), patch(
+        "homeassistant.requirements.RequirementsManager.async_process_requirements",
+        return_value=None,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -179,6 +185,9 @@ async def test_enable_diagnostic_sensors_values(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.components.yardian.__init__.AsyncYardianClient",
         return_value=FakeYardianClient(),
+    ), patch(
+        "homeassistant.requirements.RequirementsManager.async_process_requirements",
+        return_value=None,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -239,6 +248,9 @@ async def test_enable_zone_enabled_entity_and_state(hass: HomeAssistant) -> None
     with patch(
         "homeassistant.components.yardian.__init__.AsyncYardianClient",
         return_value=FakeYardianClient(),
+    ), patch(
+        "homeassistant.requirements.RequirementsManager.async_process_requirements",
+        return_value=None,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -277,6 +289,9 @@ async def test_button_press_triggers_refresh(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.components.yardian.__init__.AsyncYardianClient",
         return_value=FakeYardianClient(),
+    ), patch(
+        "homeassistant.requirements.RequirementsManager.async_process_requirements",
+        return_value=None,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
