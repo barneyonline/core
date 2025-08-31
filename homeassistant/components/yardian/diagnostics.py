@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Mapping
+
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -20,34 +22,33 @@ TO_REDACT = {
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
-) -> dict:
+) -> Mapping[str, Any]:
     """Return diagnostics for a config entry."""
     coordinator: YardianUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     data = coordinator.data
 
+    di = coordinator.device_info
     device = {
         "name": entry.title,
-        "model": coordinator._model,
+        "model": getattr(di, "model", None),
         "yid": coordinator.yid,
-        "serialNumber": coordinator._serial,
+        "serialNumber": getattr(di, "serial_number", None),
     }
 
     # Sanitize zones to basic tuple [name, enabled]
-    zones = []
-    for idx, z in enumerate(data.zones):
-        try:
+    zones: list[list[Any]] = []
+    for z in data.zones:
+        if isinstance(z, list) and len(z) >= 2:
             zones.append([z[0], z[1]])
-        except Exception:
+        else:
             zones.append([None, None])
 
-    payload = {
+    return {
         "entry": async_redact_data(entry.as_dict(), TO_REDACT),
         "device": async_redact_data(device, TO_REDACT),
         "state": {
-            "active_zones": sorted(list(data.active_zones)),
+            "active_zones": sorted(data.active_zones),
             "zones": zones,
         },
         "oper_info": async_redact_data(data.oper_info, TO_REDACT),
     }
-
-    return payload

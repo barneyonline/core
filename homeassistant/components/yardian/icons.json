@@ -45,4 +45,10 @@
       }
     }
   }
+  ,
+  "services": {
+    "start_irrigation": {
+      "icon": "mdi:sprinkler"
+    }
+  }
 }

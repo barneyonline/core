@@ -5,25 +5,31 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
+from pyyardian.async_client import YardianDeviceState
 
 from homeassistant.components.yardian.const import DOMAIN
+from homeassistant.components.yardian.diagnostics import (
+    async_get_config_entry_diagnostics,
+)
 from homeassistant.core import HomeAssistant
 
 from tests.common import MockConfigEntry
 
 
 class FakeYardianClient:
+    """Fake client returning deterministic diagnostics data."""
+
     def __init__(self, *_: object, **__: object) -> None:
-        pass
+        """Initialize fake client."""
 
     async def fetch_device_state(self):
-        from pyyardian.async_client import YardianDeviceState
-
+        """Return fake device state for diagnostics tests."""
         zones = [["Zone 1", 1], ["Zone 2", 0]]
-        active_zones = set()
+        active_zones: set[int] = set()
         return YardianDeviceState(zones=zones, active_zones=active_zones)
 
     async def fetch_oper_info(self):
+        """Return fake operation info for diagnostics tests."""
         return {
             "iRainDelay": 0,
             "iStandby": 0,
@@ -58,10 +64,6 @@ async def test_diagnostics_redaction(hass: HomeAssistant) -> None:
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
-
-    from homeassistant.components.yardian.diagnostics import (
-        async_get_config_entry_diagnostics,
-    )
 
     diag = await async_get_config_entry_diagnostics(hass, entry)
 

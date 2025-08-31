@@ -13,10 +13,10 @@ from .const import DOMAIN
 from .coordinator import YardianUpdateCoordinator
 
 PLATFORMS: list[Platform] = [
-    Platform.SWITCH,
-    Platform.SENSOR,
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
+    Platform.SENSOR,
+    Platform.SWITCH,
 ]
 
 

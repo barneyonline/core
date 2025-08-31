@@ -20,9 +20,11 @@ class FakeYardianClient:
     """Fake AsyncYardianClient for tests."""
 
     def __init__(self, *_: object, **__: object) -> None:
+        """Initialize fake client with mocked stop_irrigation."""
         self.stop_irrigation = AsyncMock()
 
     async def fetch_device_state(self):  # pyyardian.YardianDeviceState-like
+        """Return fake YardianDeviceState with three zones and one active."""
         zones = [["Zone 1", 1], ["Zone 2", 0], ["Zone 3", 1]]
         active_zones = {0}
         return YardianDeviceState(zones=zones, active_zones=active_zones)
