@@ -6,25 +6,31 @@ from unittest.mock import patch
 
 import pytest
 from syrupy.assertion import SnapshotAssertion
+from pyyardian.async_client import YardianDeviceState
 
 from homeassistant.components.yardian.const import DOMAIN
+from homeassistant.components.yardian.diagnostics import (
+    async_get_config_entry_diagnostics,
+)
 from homeassistant.core import HomeAssistant
 
 from tests.common import MockConfigEntry
 
 
 class FakeYardianClient:
+    """Fake client for diagnostics snapshot tests."""
+
     def __init__(self, *_: object, **__: object) -> None:
-        pass
+        """Initialize fake client."""
 
     async def fetch_device_state(self):
-        from pyyardian.async_client import YardianDeviceState
-
+        """Return fake device state for snapshot tests."""
         zones = [["Zone 1", 1], ["Zone 2", 0], ["Zone 3", 1]]
         active_zones = {0}
         return YardianDeviceState(zones=zones, active_zones=active_zones)
 
     async def fetch_oper_info(self):
+        """Return fake operation info for snapshot tests."""
         return {
             "iRainDelay": 3600,
             "iStandby": 0,
@@ -62,10 +68,6 @@ async def test_diagnostics_snapshot(
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
-
-    from homeassistant.components.yardian.diagnostics import (
-        async_get_config_entry_diagnostics,
-    )
 
     diag = await async_get_config_entry_diagnostics(hass, entry)
 

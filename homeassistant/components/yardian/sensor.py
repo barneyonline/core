@@ -53,11 +53,13 @@ class YardianRainDelaySensor(_BaseYardianSensor):
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator: YardianUpdateCoordinator) -> None:
+        """Initialize the rain delay sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.yid}-rain-delay"
 
     @property
     def native_value(self) -> int | None:
+        """Return remaining rain delay in seconds."""
         val = self.coordinator.data.oper_info.get("iRainDelay")
         if isinstance(val, int):
             return val
@@ -71,11 +73,13 @@ class YardianActiveZoneCountSensor(_BaseYardianSensor):
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator: YardianUpdateCoordinator) -> None:
+        """Initialize the active zone count sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.yid}-active-zone-count"
 
     @property
     def native_value(self) -> int:
+        """Return number of currently active zones."""
         return len(self.coordinator.data.active_zones)
 
 
@@ -89,11 +93,13 @@ class YardianSensorDelaySensor(_BaseYardianSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: YardianUpdateCoordinator) -> None:
+        """Initialize the sensor delay diagnostic sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.yid}-sensor-delay"
 
     @property
     def native_value(self) -> int | None:
+        """Return sensor delay in seconds."""
         val = self.coordinator.data.oper_info.get("iSensorDelay")
         if isinstance(val, int):
             return val
@@ -110,11 +116,13 @@ class YardianWaterHammerDurationSensor(_BaseYardianSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: YardianUpdateCoordinator) -> None:
+        """Initialize the water hammer duration diagnostic sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.yid}-water-hammer-duration"
 
     @property
     def native_value(self) -> int | None:
+        """Return water hammer protection duration in seconds."""
         val = self.coordinator.data.oper_info.get("iWaterHammerDuration")
         if isinstance(val, int):
             return val
@@ -129,11 +137,13 @@ class YardianRegionSensor(_BaseYardianSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: YardianUpdateCoordinator) -> None:
+        """Initialize the region diagnostic sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.yid}-region"
 
     @property
     def native_value(self) -> str | None:
+        """Return the controller region label."""
         val = self.coordinator.data.oper_info.get("region")
         if isinstance(val, str) and val:
             return val
