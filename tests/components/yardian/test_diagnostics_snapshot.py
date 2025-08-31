@@ -1,0 +1,74 @@
+"""Snapshot diagnostics test for Yardian."""
+
+from __future__ import annotations
+
+from unittest.mock import patch
+
+import pytest
+from syrupy.assertion import SnapshotAssertion
+
+from homeassistant.components.yardian.const import DOMAIN
+from homeassistant.core import HomeAssistant
+
+from tests.common import MockConfigEntry
+
+
+class FakeYardianClient:
+    def __init__(self, *_: object, **__: object) -> None:
+        pass
+
+    async def fetch_device_state(self):
+        from pyyardian.async_client import YardianDeviceState
+
+        zones = [["Zone 1", 1], ["Zone 2", 0], ["Zone 3", 1]]
+        active_zones = {0}
+        return YardianDeviceState(zones=zones, active_zones=active_zones)
+
+    async def fetch_oper_info(self):
+        return {
+            "iRainDelay": 3600,
+            "iStandby": 0,
+            "fFreezePrevent": 1,
+            "iSensorDelay": 5,
+            "iWaterHammerDuration": 2,
+            "region": "US",
+        }
+
+
+@pytest.mark.asyncio
+async def test_diagnostics_snapshot(
+    hass: HomeAssistant, snapshot: SnapshotAssertion
+) -> None:
+    """Snapshot the core diagnostics payload, excluding config entry metadata."""
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            "host": "1.2.3.4",
+            "access_token": "token123",
+            "name": "Yardian",
+            "yid": "yid123",
+            "model": "PRO1902",
+            "serialNumber": "SN1",
+        },
+        title="Yardian Smart Sprinkler",
+        unique_id="yid123",
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "homeassistant.components.yardian.__init__.AsyncYardianClient",
+        return_value=FakeYardianClient(),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    from homeassistant.components.yardian.diagnostics import (
+        async_get_config_entry_diagnostics,
+    )
+
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+
+    # Only snapshot stable parts (device, state, oper_info); entry metadata is volatile
+    subset = {k: diag[k] for k in ("device", "state", "oper_info")}
+    assert subset == snapshot
