@@ -12,6 +12,7 @@ from pyyardian import (
     NotAuthorizedException,
     YardianDeviceState,
 )
+from pyyardian.typing import OperationInfo
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -25,7 +26,22 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = datetime.timedelta(seconds=30)
 
 
-class YardianUpdateCoordinator(DataUpdateCoordinator[YardianDeviceState]):
+class YardianCombinedState:
+    """Combined device state for Yardian."""
+
+    def __init__(
+        self,
+        zones: list[list],
+        active_zones: set[int],
+        oper_info: OperationInfo,
+    ) -> None:
+        """Initialize combined state with zones, active_zones and oper_info."""
+        self.zones = zones
+        self.active_zones = active_zones
+        self.oper_info = oper_info
+
+
+class YardianUpdateCoordinator(DataUpdateCoordinator[YardianCombinedState]):
     """Coordinator for Yardian API calls."""
 
     config_entry: ConfigEntry
@@ -50,6 +66,7 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianDeviceState]):
         self.yid = entry.data["yid"]
         self._name = entry.title
         self._model = entry.data["model"]
+        self._serial = entry.data.get("serialNumber")
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -59,13 +76,22 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianDeviceState]):
             identifiers={(DOMAIN, self.yid)},
             manufacturer=MANUFACTURER,
             model=self._model,
+            serial_number=self._serial,
         )
 
-    async def _async_update_data(self) -> YardianDeviceState:
+    async def _async_update_data(self) -> YardianCombinedState:
         """Fetch data from Yardian device."""
         try:
             async with asyncio.timeout(10):
-                return await self.controller.fetch_device_state()
+                dev_state: YardianDeviceState = (
+                    await self.controller.fetch_device_state()
+                )
+                oper_info: OperationInfo = await self.controller.fetch_oper_info()
+                return YardianCombinedState(
+                    zones=dev_state.zones,
+                    active_zones=dev_state.active_zones,
+                    oper_info=oper_info,
+                )
 
         except TimeoutError as e:
             raise UpdateFailed("Communication with Device was time out") from e
