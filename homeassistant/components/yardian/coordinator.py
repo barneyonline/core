@@ -94,11 +94,12 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianCombinedState]):
                 except Exception:  # pragma: no cover - diagnostic aid
                     _LOGGER.exception("Error in fetch_oper_info")
                     raise
+                oper_keys = list(oper_info.keys()) if hasattr(oper_info, "keys") else []
                 _LOGGER.debug(
                     "Fetched Yardian data: zones=%s active=%s oper_keys=%s",
                     len(getattr(dev_state, "zones", [])),
                     len(getattr(dev_state, "active_zones", [])),
-                    list(getattr(oper_info, "keys", lambda: oper_info.keys())()),
+                    oper_keys,
                 )
                 return YardianCombinedState(
                     zones=dev_state.zones,
