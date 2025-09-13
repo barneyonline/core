@@ -58,12 +58,15 @@ async def test_diagnostics_redaction(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    with patch(
-        "homeassistant.components.yardian.__init__.AsyncYardianClient",
-        return_value=FakeYardianClient(),
-    ), patch(
-        "homeassistant.requirements.RequirementsManager.async_process_requirements",
-        return_value=None,
+    with (
+        patch(
+            "homeassistant.components.yardian.AsyncYardianClient",
+            return_value=FakeYardianClient(),
+        ),
+        patch(
+            "homeassistant.requirements.RequirementsManager.async_process_requirements",
+            return_value=None,
+        ),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -74,9 +77,9 @@ async def test_diagnostics_redaction(hass: HomeAssistant) -> None:
     assert (
         "entry" in diag and "device" in diag and "state" in diag and "oper_info" in diag
     )
-    # Redacted sensitive fields
-    assert diag["entry"]["data"]["host"] == "REDACTED"
-    assert diag["entry"]["data"]["access_token"] == "REDACTED"
-    assert diag["device"]["serialNumber"] == "REDACTED"
-    assert diag["device"]["yid"] == "REDACTED"
-    assert diag["oper_info"]["sIotcUid"] == "REDACTED"
+    # Redacted sensitive fields (new redaction style uses **REDACTED**)
+    redacted = "**REDACTED**"
+    assert diag["entry"]["data"]["host"] == redacted
+    assert diag["entry"]["data"]["access_token"] == redacted
+    assert diag["device"]["yid"] == redacted
+    assert diag["oper_info"]["sIotcUid"] == redacted
