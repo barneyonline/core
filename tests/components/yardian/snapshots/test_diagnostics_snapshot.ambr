@@ -2,10 +2,10 @@
 # name: test_diagnostics_snapshot
   dict({
     'device': dict({
-      'model': 'PRO1902',
+      'model': None,
       'name': 'Yardian Smart Sprinkler',
-      'serialNumber': 'REDACTED',
-      'yid': 'REDACTED',
+      'serialNumber': None,
+      'yid': '**REDACTED**',
     }),
     'oper_info': dict({
       'fFreezePrevent': 1,

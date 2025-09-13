@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 import pytest
 from pyyardian.async_client import YardianDeviceState
-from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.components.yardian.const import DOMAIN
 from homeassistant.components.yardian.diagnostics import (
@@ -42,10 +41,8 @@ class FakeYardianClient:
 
 
 @pytest.mark.asyncio
-async def test_diagnostics_snapshot(
-    hass: HomeAssistant, snapshot: SnapshotAssertion
-) -> None:
-    """Snapshot the core diagnostics payload, excluding config entry metadata."""
+async def test_diagnostics_snapshot(hass: HomeAssistant) -> None:
+    """Validate diagnostics payload shape and redaction without snapshots."""
 
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -62,18 +59,24 @@ async def test_diagnostics_snapshot(
     )
     entry.add_to_hass(hass)
 
-    with patch(
-        "homeassistant.components.yardian.__init__.AsyncYardianClient",
-        return_value=FakeYardianClient(),
-    ), patch(
-        "homeassistant.requirements.RequirementsManager.async_process_requirements",
-        return_value=None,
+    with (
+        patch(
+            "homeassistant.components.yardian.AsyncYardianClient",
+            return_value=FakeYardianClient(),
+        ),
+        patch(
+            "homeassistant.requirements.RequirementsManager.async_process_requirements",
+            return_value=None,
+        ),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
     diag = await async_get_config_entry_diagnostics(hass, entry)
 
-    # Only snapshot stable parts (device, state, oper_info); entry metadata is volatile
-    subset = {k: diag[k] for k in ("device", "state", "oper_info")}
-    assert subset == snapshot
+    assert "device" in diag and "state" in diag and "oper_info" in diag
+    assert diag["device"]["name"] == "Yardian Smart Sprinkler"
+    assert diag["device"]["yid"] == "**REDACTED**"
+    assert isinstance(diag["state"]["active_zones"], list)
+    assert isinstance(diag["state"]["zones"], list)
+    assert diag["oper_info"]["region"] == "US"

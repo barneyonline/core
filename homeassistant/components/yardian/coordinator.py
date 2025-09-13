@@ -6,16 +6,12 @@ import asyncio
 import datetime
 import logging
 
-from pyyardian import (
-    AsyncYardianClient,
-    NetworkException,
-    NotAuthorizedException,
-    YardianDeviceState,
-)
+from pyyardian import AsyncYardianClient, NetworkException, NotAuthorizedException
 from pyyardian.typing import OperationInfo
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -83,10 +79,27 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianCombinedState]):
         """Fetch data from Yardian device."""
         try:
             async with asyncio.timeout(10):
-                dev_state: YardianDeviceState = (
-                    await self.controller.fetch_device_state()
+                _LOGGER.debug(
+                    "Fetching Yardian device state for %s (controller=%s)",
+                    self._name,
+                    type(self.controller).__name__,
                 )
-                oper_info: OperationInfo = await self.controller.fetch_oper_info()
+                try:
+                    dev_state = await self.controller.fetch_device_state()
+                except Exception:  # pragma: no cover - diagnostic aid
+                    _LOGGER.exception("Error in fetch_device_state")
+                    raise
+                try:
+                    oper_info = await self.controller.fetch_oper_info()
+                except Exception:  # pragma: no cover - diagnostic aid
+                    _LOGGER.exception("Error in fetch_oper_info")
+                    raise
+                _LOGGER.debug(
+                    "Fetched Yardian data: zones=%s active=%s oper_keys=%s",
+                    len(getattr(dev_state, "zones", [])),
+                    len(getattr(dev_state, "active_zones", [])),
+                    list(getattr(oper_info, "keys", lambda: oper_info.keys())()),
+                )
                 return YardianCombinedState(
                     zones=dev_state.zones,
                     active_zones=dev_state.active_zones,
@@ -94,8 +107,12 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianCombinedState]):
                 )
 
         except TimeoutError as e:
-            raise UpdateFailed("Communication with Device was time out") from e
+            raise UpdateFailed("Timeout communicating with device") from e
         except NotAuthorizedException as e:
-            raise UpdateFailed("Invalid access token") from e
+            # Trigger reauth flow according to HA best practices
+            raise ConfigEntryAuthFailed("Invalid access token") from e
         except NetworkException as e:
-            raise UpdateFailed("Failed to communicate with Device") from e
+            raise UpdateFailed("Failed to communicate with device") from e
+        except Exception as e:  # safety net for tests to surface failure reason
+            _LOGGER.exception("Unexpected error while fetching Yardian data")
+            raise UpdateFailed(f"Unexpected error: {type(e).__name__}: {e}") from e

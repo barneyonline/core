@@ -52,7 +52,7 @@ class YardianSwitch(CoordinatorEntity[YardianUpdateCoordinator], SwitchEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "switch"
 
-    def __init__(self, coordinator: YardianUpdateCoordinator, zone_id) -> None:
+    def __init__(self, coordinator: YardianUpdateCoordinator, zone_id: int) -> None:
         """Initialize a Yardian Switch Device."""
         super().__init__(coordinator)
         self._zone_id = zone_id
@@ -76,9 +76,12 @@ class YardianSwitch(CoordinatorEntity[YardianUpdateCoordinator], SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
+        # Service schema (services.yaml) defines duration in minutes.
+        # The client expects minutes and will convert to seconds internally.
+        minutes: int = kwargs.get("duration", DEFAULT_WATERING_DURATION)
         await self.coordinator.controller.start_irrigation(
             self._zone_id,
-            kwargs.get("duration", DEFAULT_WATERING_DURATION),
+            int(minutes),
         )
         await self.coordinator.async_request_refresh()
 
