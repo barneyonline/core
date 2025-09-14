@@ -45,6 +45,7 @@ def platforms() -> list[Platform]:
 @pytest.mark.usefixtures("entity_registry_enabled_by_default")
 async def test_update_success(
     hass: HomeAssistant,
+    mock_send_message,
     bypass_api_fixture,
     setup_entry: MockConfigEntry,
     entity_id: str,
@@ -52,15 +53,12 @@ async def test_update_success(
     """Test pressing the button entities."""
     # Ensure that the entity exist, as these test can pass even if there is no entity.
     assert hass.states.get(entity_id).state == "unknown"
-    with patch(
-        "homeassistant.components.roborock.coordinator.RoborockLocalClientV1.send_command"
-    ) as mock_send_message:
-        await hass.services.async_call(
-            "button",
-            SERVICE_PRESS,
-            blocking=True,
-            target={"entity_id": entity_id},
-        )
+    await hass.services.async_call(
+        "button",
+        SERVICE_PRESS,
+        blocking=True,
+        target={"entity_id": entity_id},
+    )
     assert mock_send_message.assert_called_once
     assert hass.states.get(entity_id).state == "2023-10-30T08:50:00+00:00"
 
@@ -73,8 +71,10 @@ async def test_update_success(
 )
 @pytest.mark.freeze_time("2023-10-30 08:50:00")
 @pytest.mark.usefixtures("entity_registry_enabled_by_default")
+@pytest.mark.parametrize("send_message_side_effect", [roborock.exceptions.RoborockTimeout])
 async def test_update_failure(
     hass: HomeAssistant,
+    mock_send_message,
     bypass_api_fixture,
     setup_entry: MockConfigEntry,
     entity_id: str,
@@ -82,13 +82,7 @@ async def test_update_failure(
     """Test failure while pressing the button entity."""
     # Ensure that the entity exist, as these test can pass even if there is no entity.
     assert hass.states.get(entity_id).state == "unknown"
-    with (
-        patch(
-            "homeassistant.components.roborock.coordinator.RoborockLocalClientV1.send_command",
-            side_effect=roborock.exceptions.RoborockTimeout,
-        ) as mock_send_message,
-        pytest.raises(HomeAssistantError, match="Error while calling RESET_CONSUMABLE"),
-    ):
+    with pytest.raises(HomeAssistantError, match="Error while calling RESET_CONSUMABLE"):
         await hass.services.async_call(
             "button",
             SERVICE_PRESS,

@@ -199,7 +199,12 @@ def send_message_side_effect_fixture() -> Any:
 
 @pytest.fixture(name="mock_send_message")
 def mock_send_message_fixture(send_message_side_effect: Any) -> Mock:
-    """Fixture to mock the low-level command send method for v1 devices."""
+    """Fixture to mock the low-level client send for v1 devices.
+
+    Patch LocalClientV1._send_command so both direct cache.update_value()
+    paths and entity wrapper paths avoid network and can raise side effects
+    that the entity code converts to HomeAssistantError.
+    """
     with patch(
         "homeassistant.components.roborock.coordinator.RoborockLocalClientV1._send_command",
         side_effect=send_message_side_effect,
