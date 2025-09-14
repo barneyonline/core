@@ -1,9 +1,6 @@
 """Test Roborock Number platform."""
 
-from unittest.mock import patch
-
 import pytest
-import roborock
 
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
 from homeassistant.const import Platform
