@@ -1,6 +1,7 @@
 """Test Roborock Number platform."""
 
 import pytest
+import roborock
 
 from homeassistant.components.number import ATTR_VALUE, SERVICE_SET_VALUE
 from homeassistant.const import Platform
@@ -48,6 +49,9 @@ async def test_update_success(
     [
         ("number.roborock_s7_maxv_volume", 3.0),
     ],
+)
+@pytest.mark.parametrize(
+    "send_message_side_effect", [roborock.exceptions.RoborockTimeout]
 )
 async def test_update_failed(
     hass: HomeAssistant,
