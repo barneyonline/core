@@ -84,16 +84,10 @@ class YardianUpdateCoordinator(DataUpdateCoordinator[YardianCombinedState]):
                     self._name,
                     type(self.controller).__name__,
                 )
-                try:
-                    dev_state = await self.controller.fetch_device_state()
-                except Exception:  # pragma: no cover - diagnostic aid
-                    _LOGGER.exception("Error in fetch_device_state")
-                    raise
-                try:
-                    oper_info = await self.controller.fetch_oper_info()
-                except Exception:  # pragma: no cover - diagnostic aid
-                    _LOGGER.exception("Error in fetch_oper_info")
-                    raise
+                # Fetch device state and operation info; specific exceptions are
+                # handled by the outer block to avoid double-logging.
+                dev_state = await self.controller.fetch_device_state()
+                oper_info = await self.controller.fetch_oper_info()
                 oper_keys = list(oper_info.keys()) if hasattr(oper_info, "keys") else []
                 _LOGGER.debug(
                     "Fetched Yardian data: zones=%s active=%s oper_keys=%s",

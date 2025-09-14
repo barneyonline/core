@@ -58,6 +58,11 @@ class YardianSwitch(CoordinatorEntity[YardianUpdateCoordinator], SwitchEntity):
         self._zone_id = zone_id
         self._attr_unique_id = f"{coordinator.yid}-{zone_id}"
         self._attr_device_info = coordinator.device_info
+        # Disable switch by default if the zone is disabled on the controller.
+        # zones entry format: [name, enabled_flag]
+        self._attr_entity_registry_enabled_default = (
+            coordinator.data.zones[self._zone_id][1] == 1
+        )
 
     @property
     def name(self) -> str:

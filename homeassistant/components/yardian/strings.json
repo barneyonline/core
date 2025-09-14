@@ -22,11 +22,6 @@
     }
   },
   "entity": {
-    "button": {
-      "stop_all_irrigation": {
-        "name": "Stop all irrigation"
-      }
-    },
     "binary_sensor": {
       "watering_running": {
         "name": "Watering running"
