@@ -71,7 +71,9 @@ async def test_update_success(
 )
 @pytest.mark.freeze_time("2023-10-30 08:50:00")
 @pytest.mark.usefixtures("entity_registry_enabled_by_default")
-@pytest.mark.parametrize("send_message_side_effect", [roborock.exceptions.RoborockTimeout])
+@pytest.mark.parametrize(
+    "send_message_side_effect", [roborock.exceptions.RoborockTimeout]
+)
 async def test_update_failure(
     hass: HomeAssistant,
     mock_send_message,
@@ -82,7 +84,9 @@ async def test_update_failure(
     """Test failure while pressing the button entity."""
     # Ensure that the entity exist, as these test can pass even if there is no entity.
     assert hass.states.get(entity_id).state == "unknown"
-    with pytest.raises(HomeAssistantError, match="Error while calling RESET_CONSUMABLE"):
+    with pytest.raises(
+        HomeAssistantError, match="Error while calling RESET_CONSUMABLE"
+    ):
         await hass.services.async_call(
             "button",
             SERVICE_PRESS,
