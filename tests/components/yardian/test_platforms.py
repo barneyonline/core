@@ -7,7 +7,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from pyyardian.async_client import YardianDeviceState
 
-from homeassistant.components.button import DOMAIN as BUTTON_DOMAIN
 from homeassistant.components.yardian.const import DOMAIN
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
@@ -43,8 +42,8 @@ class FakeYardianClient:
 
 
 @pytest.mark.asyncio
-async def test_entities_and_button_press(hass: HomeAssistant) -> None:
-    """Test entities are created and button triggers stop."""
+async def test_entities_setup(hass: HomeAssistant) -> None:
+    """Test entities are created (no stop button) and zone switches respect defaults."""
 
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -103,19 +102,19 @@ async def test_entities_and_button_press(hass: HomeAssistant) -> None:
     assert azc.state == "1"
     assert azc.attributes.get("state_class") == "measurement"
 
-    # Button: stop all irrigation
-    stop_entity_id = ent_reg.async_get_entity_id("button", DOMAIN, "yid123-stop")
-    assert stop_entity_id is not None
+    # Ensure no stop button is created
+    assert ent_reg.async_get_entity_id("button", DOMAIN, "yid123-stop") is None
 
-    # Press button and assert client called
-    fake_client: FakeYardianClient = hass.data[DOMAIN][entry.entry_id].controller  # type: ignore[attr-defined]
-    await hass.services.async_call(
-        BUTTON_DOMAIN,
-        "press",
-        {"entity_id": stop_entity_id},
-        blocking=True,
-    )
-    fake_client.stop_irrigation.assert_awaited_once()
+    # Switch for disabled zone (zone 1) should be disabled by default
+    disabled_switch = ent_reg.async_get_entity_id("switch", DOMAIN, "yid123-1")
+    assert disabled_switch is not None
+    reg_entry = ent_reg.async_get(disabled_switch)
+    assert reg_entry is not None and reg_entry.disabled
+    # Enabled zone (zone 0) switch should be enabled by default
+    enabled_switch = ent_reg.async_get_entity_id("switch", DOMAIN, "yid123-0")
+    assert enabled_switch is not None
+    reg_entry_enabled = ent_reg.async_get(enabled_switch)
+    assert reg_entry_enabled is not None and not reg_entry_enabled.disabled
 
     # Device info includes serial number
     dev_reg = dr.async_get(hass)
@@ -301,8 +300,8 @@ async def test_enable_zone_enabled_entity_and_state(hass: HomeAssistant) -> None
 
 
 @pytest.mark.asyncio
-async def test_button_press_triggers_refresh(hass: HomeAssistant) -> None:
-    """Pressing the stop button triggers a coordinator refresh."""
+async def test_no_stop_button_present(hass: HomeAssistant) -> None:
+    """Verify stop-all button is no longer created."""
 
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -319,34 +318,15 @@ async def test_button_press_triggers_refresh(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    with (
-        patch(
-            "homeassistant.components.yardian.AsyncYardianClient",
-            return_value=FakeYardianClient(),
-        ),
-        patch(
-            "homeassistant.requirements.RequirementsManager.async_process_requirements",
-            return_value=None,
-        ),
+    with patch(
+        "homeassistant.components.yardian.AsyncYardianClient",
+        return_value=FakeYardianClient(),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
     ent_reg = er.async_get(hass)
-    stop_entity_id = ent_reg.async_get_entity_id("button", DOMAIN, "yid123-stop")
-    assert stop_entity_id is not None
-
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    with patch.object(
-        coordinator, "async_request_refresh", new=AsyncMock()
-    ) as mocked_refresh:
-        await hass.services.async_call(
-            BUTTON_DOMAIN,
-            "press",
-            {"entity_id": stop_entity_id},
-            blocking=True,
-        )
-        mocked_refresh.assert_awaited_once()
+    assert ent_reg.async_get_entity_id("button", DOMAIN, "yid123-stop") is None
 
 
 @pytest.mark.asyncio

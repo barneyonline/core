@@ -12,6 +12,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import YardianUpdateCoordinator
@@ -62,7 +63,8 @@ class YardianRainDelaySensor(_BaseYardianSensor):
         """Return remaining rain delay in seconds."""
         val = self.coordinator.data.oper_info.get("iRainDelay")
         if isinstance(val, int):
-            return val
+            # Some devices report negative remaining time; clamp to 0
+            return max(0, val)
         return None
 
 
@@ -99,10 +101,20 @@ class YardianSensorDelaySensor(_BaseYardianSensor):
 
     @property
     def native_value(self) -> int | None:
-        """Return sensor delay in seconds."""
+        """Return sensor delay in seconds.
+
+        Some firmware reports an absolute Unix timestamp for when the sensor
+        delay ends. If the value looks like a timestamp (far in the future),
+        convert to remaining seconds; otherwise treat it as a duration.
+        """
         val = self.coordinator.data.oper_info.get("iSensorDelay")
         if isinstance(val, int):
-            return val
+            # Heuristic: values larger than ~1 year are treated as epoch seconds
+            if val > 365 * 24 * 3600:
+                now = int(dt_util.utcnow().timestamp())
+                return max(0, val - now)
+            # Otherwise, treat as seconds duration
+            return max(0, val)
         return None
 
 
