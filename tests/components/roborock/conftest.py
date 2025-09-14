@@ -199,9 +199,9 @@ def send_message_side_effect_fixture() -> Any:
 
 @pytest.fixture(name="mock_send_message")
 def mock_send_message_fixture(send_message_side_effect: Any) -> Mock:
-    """Fixture to mock the send_message method."""
+    """Fixture to mock the low-level command send method for v1 devices."""
     with patch(
-        "homeassistant.components.roborock.coordinator.RoborockLocalClientV1._send_message",
+        "homeassistant.components.roborock.coordinator.RoborockLocalClientV1._send_command",
         side_effect=send_message_side_effect,
     ) as mock_send_message:
         yield mock_send_message
