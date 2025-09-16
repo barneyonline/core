@@ -116,7 +116,7 @@ def bypass_api_fixture(bypass_api_client_fixture: Any) -> None:
             return_value=MAP_DATA,
         ),
         patch(
-            "homeassistant.components.roborock.coordinator.RoborockLocalClientV1.send_message"
+            "homeassistant.components.roborock.coordinator.RoborockLocalClientV1._send_command"
         ),
         patch("homeassistant.components.roborock.RoborockMqttClientV1._wait_response"),
         patch(
@@ -163,7 +163,11 @@ def bypass_api_fixture(bypass_api_client_fixture: Any) -> None:
 
 @pytest.fixture(name="send_message_side_effect")
 def send_message_side_effect_fixture() -> Any:
-    """Fixture to return a side effect for the send_message method."""
+    """Side effect for low-level command method (_send_command).
+
+    Name kept for backward compatibility with older tests that referred to
+    `send_message` in older library versions.
+    """
     return None
 
 
