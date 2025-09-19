@@ -64,9 +64,12 @@ async def test_reconfigure_success(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    with patch(
-        "homeassistant.components.yardian.config_flow.AsyncYardianClient.fetch_device_info",
-        return_value={"name": "fake_name", "yid": "fake_yid"},
+    with (
+        patch(
+            "homeassistant.components.yardian.config_flow.AsyncYardianClient.fetch_device_info",
+            return_value={"name": "fake_name", "yid": "fake_yid"},
+        ),
+        patch.object(hass.config_entries, "async_reload", AsyncMock()) as mock_reload,
     ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
@@ -86,6 +89,7 @@ async def test_reconfigure_success(hass: HomeAssistant) -> None:
     assert result2["reason"] == "reconfigure_successful"
     assert entry.data["host"] == "new_host"
     assert entry.data["access_token"] == "new_token"
+    mock_reload.assert_awaited_once_with(entry.entry_id)
 
 
 async def test_reconfigure_invalid_auth(hass: HomeAssistant) -> None:
